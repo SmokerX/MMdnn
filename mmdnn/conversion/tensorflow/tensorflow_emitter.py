@@ -29,7 +29,7 @@ class TensorflowEmitter(Emitter):
     @property
     def header_code(self):
         return """import tensorflow as tf
-
+import numpy as np
 __weights_dict = dict()
 
 is_train = {}
@@ -695,11 +695,15 @@ def prelu(input, name):
     def _layer_BatchNorm(self):
         self.add_body(0, """
 def batch_normalization(input, name, **kwargs):
-    mean = tf.Variable(__weights_dict[name]['mean'], name = name + "_mean", trainable = is_train)
-    variance = tf.Variable(__weights_dict[name]['var'], name = name + "_var", trainable = is_train)
+    mean = tf.Variable(__weights_dict[name]['mean'], name = name + "_mean", trainable = is_train) if not is_train else None
+    variance = tf.Variable(__weights_dict[name]['var'], name = name + "_var", trainable = is_train) if not is_train else None
     offset = tf.Variable(__weights_dict[name]['bias'], name = name + "_bias", trainable = is_train) if 'bias' in __weights_dict[name] else None
-    scale = tf.Variable(__weights_dict[name]['scale'], name = name + "_scale", trainable = is_train) if 'scale' in __weights_dict[name] else None
-    return tf.nn.batch_normalization(input, mean, variance, offset, scale, name = name, **kwargs)
+    scale = tf.Variable(np.squeeze(__weights_dict[name]['scale']), name = name + "_scale", trainable = is_train) if 'scale' in __weights_dict[name] else None
+    kwargs['epsilon'] = kwargs['variance_epsilon']
+    kwargs['is_training'] = is_train
+    kwargs.pop('variance_epsilon')
+    res =tf.nn.fused_batch_norm(input, scale, offset, mean, variance, name=name, **kwargs)
+    return res[0]
 """)
 
 
