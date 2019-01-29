@@ -106,6 +106,14 @@ def _main():
         network_filename = get_network_filename(args.dstFramework, temp_filename, args.outputModel)
         code_args, unknown_args = _extract_code_args(args, unknown_args, temp_filename, network_filename)
         ret = IRToCode._convert(code_args)
+        lines = open(network_filename + '.py', 'r').readlines()
+        f = open(network_filename + '.py', 'w')
+        for line in lines:
+            if line.__contains__('reorg1'):
+                f.write("    reorg1         = tf.space_to_depth(relu21, 2, name = 'reorg1')\n")
+            f.write(line)
+        f.flush()
+        f.close()
         if int(ret) != 0:
             _sys.exit(int(ret))
         from mmdnn.conversion._script.dump_code import dump_code

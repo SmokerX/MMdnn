@@ -51,6 +51,9 @@ def shape_identity(node):
     assert len(node.parents) > 0
     return node.parents[0][0].output_shape
 
+def shape_org(node):
+    last_shape = node.get_only_parent()[0].output_shape
+    return TensorShape(last_shape.batch_size, last_shape.channels*4, last_shape.height//2, last_shape.width//2)
 
 def shape_scalar(node):
     return TensorShape(1, 1, 1, 1)

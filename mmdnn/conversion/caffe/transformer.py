@@ -5,9 +5,9 @@ from mmdnn.conversion.caffe.graph import GraphBuilder, NodeKind, LAYER_IN_TRAIN_
 from mmdnn.conversion.caffe.mapper import NodeMapper, get_handler_name
 from mmdnn.conversion.caffe.resolver import get_caffe_resolver, has_pycaffe
 from mmdnn.conversion.caffe.errors import print_stderr, ConversionError
-from mmdnn.conversion.caffe.common_graph import Graph
+from mmdnn.conversion.caffe.common_graph import Graph,Node
 from mmdnn.conversion.caffe.utils import get_lower_case, get_upper_case
-
+from mmdnn.conversion.common.IR.graph_pb2 import GraphDef, NodeDef, TensorShape,AttrValue
 
 class DataInjector(object):
     '''
@@ -361,7 +361,21 @@ class CaffeTransformer(object):
 
         ret = []
         for node in self.graph.nodes:
-            mapped_node = self.map_node(node)
+            try:
+                mapped_node = self.map_node(node)
+            except:
+                if node.name.__contains__('reorg'):
+                    node_pb2 = NodeDef()
+                    node_pb2.name = node.name
+                    node_pb2.op = 'SpaceToDepth'
+                    node_pb2.input.append('relu21')
+                    node_pb2.attr['T'].CopyFrom(AttrValue(type='DT_FLOAT32'))
+                    node_pb2.attr['block_size'].CopyFrom(AttrValue(i=2))
+                    node_pb2.attr['data_format'].CopyFrom(AttrValue(s=b"NHWC"))
+                    mapped_node = Node(node_pb2)
+                    mapped_node.output.append(node.name)
+                else:
+                    continue
             if isinstance(mapped_node, list):
                 ret.extend([n for n in mapped_node])
             elif mapped_node:

@@ -54,6 +54,7 @@ layer_num_to_name = {
     38: 'Exp',
     39: 'Deconvolution',
     40: 'PReLU'
+    ,41:'IPlugin'
     }
 
 LAYER_DESCRIPTORS = {
@@ -104,6 +105,7 @@ LAYER_DESCRIPTORS = {
     'Reshape' : shape_reshape,
     'ResizeBilinear': shape_reshape,
     'PReLU'   : shape_identity
+    ,'IPlugin':shape_org
     }
 
 LAYER_TYPES = LAYER_DESCRIPTORS.keys()
